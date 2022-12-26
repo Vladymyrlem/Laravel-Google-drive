@@ -1,0 +1,85 @@
+version: '3'
+services:
+    #PHP Service
+    app:
+        build:
+            context: ./vendor/laravel/sail/runtimes/8.1
+            dockerfile: Dockerfile
+        image: php:8.0.26-apache
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        container_name: laravel-test
+        restart: unless-stopped
+        ports:
+            - 80:80
+        tty: true
+        environment:
+            SERVICE_NAME: app
+            SERVICE_TAGS: dev
+            LARAVEL_SAIL: 1
+        volumes:
+            - .:/var/www/html
+            - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - app-network
+    phpmyadmin:
+        image: phpmyadmin:latest
+        restart: always
+        ports:
+            - 8084:80
+        environment:
+            - PMA_ARBITRARY=1
+    #Nginx Service
+        #webserver:
+            #image: nginx:alpine
+            #container_name: webserver
+            #restart: unless-stopped
+            #tty: true
+            #ports:
+            #- "8300:80"
+            #- "8443:443"
+            #volumes:
+            #- ../laravel/:/var/www/laravel
+            #- ./nginx/conf.d/:/etc/nginx/conf.d/
+            #networks:
+            #- app-network
+
+    #MySQL Service
+    db:
+        image: mysql:latest
+        container_name: db
+        restart: unless-stopped
+        tty: true
+        ports:
+            - "33061:3306"
+        environment:
+            MYSQL_DATABASE: mylaravel
+            MYSQL_ROOT_PASSWORD: root
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        volumes:
+            - dbdata:/var/lib/mysql/
+            - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+        networks:
+            - app-network
+    sftp:
+        image: atmoz/sftp
+        volumes:
+            - ./var/upload:/home/foo/upload
+        ports:
+            - "2222:22"
+        command: foo:pass:1001
+    newsftp:
+       image: "emberstack/sftp"
+       ports:
+             - "22:22"
+       volumes:
+             - ../config-samples/sample.sftp.json:/app/config/sftp.json:ro
+#Docker Networks
+networks:
+    app-network:
+        driver: bridge
+#Volumes
+volumes:
+    dbdata:
+        driver: local
