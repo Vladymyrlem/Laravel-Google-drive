@@ -25,6 +25,6 @@ Route::get('/test', function() {
     Storage::disk('google');
 });
 Route::post('/upload', function (Request $request){
-    $request->file("thing")->store("","google");
+    $request->file("thing")->store("","google2");
 }
 );
